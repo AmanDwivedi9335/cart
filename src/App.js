@@ -10,6 +10,7 @@ class App extends React.Component {
               products:[],
               loading: true
           }
+          this.db = firebase.firestore();
       }
 
        componentDidMount(){
@@ -35,14 +36,14 @@ class App extends React.Component {
       //     })
       //   })
       
-      firebase
-      .firestore()
+      this.db
       .collection('products')
       .onSnapshot((snapshot)=> {
           console.log(snapshot);
 
           snapshot.docs.map((doc) => {
             console.log(doc.data())
+            return '' //changed this on my own
           });
 
           const products = snapshot.docs.map((doc) => {
@@ -62,10 +63,17 @@ class App extends React.Component {
           const {products} = this.state;
           const index = products.indexOf(product);
 
-          products[index].qty +=1;
+          const docRef = this.db.collection('products').doc(products[index].id);
 
-          this.setState({
-              products
+          docRef
+          .update({
+            qty: products[index].qty + 1
+          })
+          .then(()=>{
+            console.log('Updated Successfully');
+          })
+          .catch((error) => {
+            console.log("Error in updating: ", error)
           })
 
       }
@@ -74,10 +82,17 @@ class App extends React.Component {
           const {products} = this.state;
           const index = products.indexOf(product);
 
-          products[index].qty -=1;
+          const docRef = this.db.collection('products').doc(products[index].id);
 
-          this.setState({
-              products
+          docRef
+          .update({
+            qty: products[index].qty - 1
+          })
+          .then(()=>{
+            console.log('Updated Successfully');
+          })
+          .catch((error) => {
+            console.log("Error in updating: ", error)
           })
 
       }
@@ -117,11 +132,29 @@ class App extends React.Component {
 
       }
 
+      addProduct = () => {
+        this.db
+        .collection('products')
+        .add({
+          img: 'https://4.imimg.com/data4/MD/TD/MY-13223178/whirlpool-washing-machine.jpg',
+          price: 9999,
+          qty: 9,
+          title: 'Washing Machine'
+        })
+        .then((docRef) => {
+          console.log('product had been added',docRef);
+        })
+        .catch((error) => {
+          console.log('Error: ',error);
+        })
+      }
+
   render(){
     const {products, loading} = this.state;
     return (
       <div className="App">
         <Navbar count = { this.getCartCount()} />
+        <button onClick={this.addProduct}>Add Product </button>
         <Cart 
         products = {products}
         onIncreaseQuatity={this.handleIncreaseQuantity}
